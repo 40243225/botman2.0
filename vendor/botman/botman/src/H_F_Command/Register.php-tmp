@@ -1,0 +1,46 @@
+<?php
+namespace BotMan\BotMan\H_F_Command;
+use BotMan\BotMan\BotMan;
+
+use BotMan\BotMan\MySQL\connetdb;
+
+class Register {
+	public function register($bot) {
+
+		$user = $bot->getUser();
+		$name = $user->getFirstName().$user->getLastName();
+		$id   = $user->getId();
+		$a    = $this->check($id);
+		if ($a == 1) {
+			$bot->reply('資料庫錯誤');
+		} else if ($a == 3) {
+			$bot->reply('請用瀏覽器開啟底下網址來申請帳號!!');
+			$bot->reply('http://cloudsoftwarelab404.info/H_F/register.php?id='.$id."_63152_".$name);
+		} else if ($a == 2) {
+			$bot->reply('您已經申請過了!!');
+		} else if ($a == 4) {
+			$bot->reply('不知名的錯誤');
+		}
+
+	}
+
+	public function check($id) {
+		$db     = new connetdb();
+		$mysql  = $db->SQL();
+		$sql    = "SELECT count(*) FROM `member` WHERE `BOT_ID` LIKE '$id'";
+		$result = $mysql->query($sql);
+		if (!$result) {
+			return "1";
+		} else {
+			$row = $result->fetch_array(MYSQLI_NUM);
+			if ($row[0] > 0) {
+				return "2";
+			} else {
+
+				return "3";
+			}
+		}
+
+		return "4";
+	}
+}

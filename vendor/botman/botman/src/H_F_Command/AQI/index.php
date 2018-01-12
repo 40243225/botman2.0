@@ -1,0 +1,25 @@
+﻿<?php
+$json=file_get_contents("C:\AppServ\www\IU\IU.json");
+$p_data=json_decode($json);
+//var_dump($p_data);
+foreach ($p_data as $key => $value) {
+	//var_dump($value);
+	echo $value->name;
+	echo $value->url;
+	echo "<br>";
+}
+/*foreach ($p_data as $Data) {
+		$County = $Data->County;
+		$pm25 = "PM2.5";
+		if (preg_match("/\\". $County . "/i" , $city)) {
+			array_push($SiteName, $Data->SiteName);
+			array_push($AQI, $Data->AQI);
+			array_push($Status, $Data->Status);
+		}
+		
+}
+foreach($SiteName as $i =>$value)
+{
+	echo "測站名稱：" . $SiteName[$i] . "<br>空氣品質指標：" . $AQI[$i] . "<br>狀態：" . $Status[$i]."<br>";
+}*/
+?>

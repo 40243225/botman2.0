@@ -1,0 +1,96 @@
+<?php
+namespace BotMan\BotMan\H_F_Command;
+use BotMan\BotMan\BotMan;
+use BotMan\BotMan\Messages\Conversations\Conversation;
+use BotMan\BotMan\Messages\Incoming\Answer;
+
+class AQI_Query extends Conversation {
+	public $city;
+	public $Taiwancity;
+	public $SiteName;
+	public $AQI;
+	public $Status;
+
+	public function askCity() {
+		$this->ask('要查詢的縣市?(Ex:臺北市，雲林縣...等)', function (Answer $answer) {
+				// Save result
+				$this->city = $answer->getText();
+				if (in_array($this->city, $this->Taiwancity)) {
+					$this->Query();
+				} else {
+
+					$this->say("輸入有誤");
+
+				}
+			}
+		);
+
+	}
+	public function Query() {
+
+		$url = "http://opendata2.epa.gov.tw/AQI.json";
+		$ch  = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+		$this->say("查詢中，請稍後...");
+		$retValue       = curl_exec($ch);
+		$this->SiteName = array();
+		$this->AQI      = array();
+		$this->Status   = array();
+		$p_data         = json_decode($retValue);
+		foreach ($p_data as $Data) {
+			$County = $Data->County;
+			$pm25   = "PM2.5";
+			if (preg_match("/\\".$County."/i", $this->city)) {
+				array_push($this->SiteName, $Data->SiteName);
+				array_push($this->AQI, $Data->AQI);
+				array_push($this->Status, $Data->Status);
+			}
+		}
+		if (count($this->SiteName) == 1) {
+			$this->output(0);
+		} else {
+			foreach ($this->SiteName as $i => $value) {
+				$str = $str."編號:".$i."  測站名稱:".$this->SiteName[$i]."\n";
+			}
+			$this->ask_Number($str);
+		}
+
+	}
+	public function ask_Number($str) {
+		$this->say($str);
+		$this->ask("輸入編號選擇測站(EX:0)", function (Answer $answer) {
+				// Save result
+				$number = $answer->getText();
+				if (is_numeric($number) && (int) $number < count($this->SiteName)) {
+					$this->output((int) $number);
+				} else {
+					$this->ask_Number2($str);
+				}
+			});
+	}
+	public function ask_Number2($str) {
+		$this->ask("輸入有誤請重新輸入", function (Answer $answer) {
+				// Save result
+				$number = $answer->getText();
+				if (is_numeric($number) && (int) $number < count($this->SiteName)) {
+					$this->output((int) $number);
+				} else {
+					$this->say("輸入有誤請重新輸入");
+					$this->ask_Number($str);
+				}
+			});
+	}
+	public function output($number) {
+		$output = "測站名稱：".$this->SiteName[$number]."\n"."空氣品質指標(AQI)：".$this->AQI[$number]."\n"."狀態：".$this->Status[$number];
+		$this->say($output);
+	}
+	public function run() {
+		// This will be called immediately
+		$this->Taiwancity = array("臺北市", "新北市", "桃園市", "臺中市", "臺南市", "高雄市", "基隆市", "新竹市", "嘉義市", "新竹縣", "苗栗縣", "彰化縣", "南投縣", "雲林縣", "嘉義縣", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣");
+		$this->askCity();
+	}
+}
